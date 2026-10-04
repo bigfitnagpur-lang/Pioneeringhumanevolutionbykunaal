@@ -1,0 +1,42 @@
+[build]
+  publish = "."
+  functions = "netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "18"
+
+# --------------------------------------------
+# Scheduled daily report
+# --------------------------------------------
+# Netlify's scheduler evaluates cron expressions in UTC — it has no
+# concept of the site owner's local timezone. IST (India) is UTC+5:30,
+# so "23:59 IST" is "18:29 UTC" on the SAME calendar day.
+#
+#   23:59 IST  =  23:59 - 05:30  =  18:29 UTC
+#
+# The cron below ("29 18 * * *") therefore fires once a day at 18:29
+# UTC, which is 11:59 PM in India. If you ever move to a different
+# timezone, recompute this line AND update REPORT_TIMEZONE_OFFSET_MINUTES
+# in Netlify's environment variables to match — they are independent
+# settings that both need to agree: this cron controls WHEN the
+# function runs (always UTC), the env var controls WHICH calendar
+# day's data it reports on.
+[functions."daily-report"]
+  schedule = "29 18 * * *"
+
+# --------------------------------------------
+# Friendly path to the admin dashboard.
+# Visit /admin?token=YOUR_ADMIN_ACCESS_TOKEN (set that env var in
+# Netlify's site settings first). If this redirect ever doesn't work
+# as expected, the direct URL always works as a fallback:
+#   /.netlify/functions/api?action=admin&token=YOUR_ADMIN_ACCESS_TOKEN
+# --------------------------------------------
+[[redirects]]
+  from = "/admin"
+  to = "/.netlify/functions/api?action=admin"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
